@@ -1,10 +1,10 @@
 #!/bin/bash
 
 readonly ROOT_DIR="$( cd "$( dirname "${0}" )" && cd .. && pwd )"
-readonly MY_NAME="${ROOT_DIR##*/}"
+readonly MY_NAME='starter'
 
-readonly SERVER_CID=`docker ps --all --quiet --filter "name=${MY_NAME}_server"`
-readonly CLIENT_CID=`docker ps --all --quiet --filter "name=${MY_NAME}_client"`
+readonly SERVER_CID=`docker ps --all --quiet --filter "name=${MY_NAME}_fat_server"`
+readonly CLIENT_CID=`docker ps --all --quiet --filter "name=${MY_NAME}_fat_client"`
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -20,7 +20,7 @@ run_server_tests()
       - $(basename ${CYBER_DOJO_COVERAGE_ROOT}) \
         | tar Cxf ${ROOT_DIR}/server/ -
 
-  echo "Coverage report copied to ${MY_NAME}/server/coverage/"
+  echo "Coverage report copied to .../server/coverage/"
   cat ${ROOT_DIR}/server/coverage/done.txt
 }
 
@@ -38,7 +38,7 @@ run_client_tests()
       - $(basename ${CYBER_DOJO_COVERAGE_ROOT}) \
         | tar Cxf ${ROOT_DIR}/client/ -
 
-  echo "Coverage report copied to ${MY_NAME}/client/coverage/"
+  echo "Coverage report copied to .../client/coverage/"
   cat ${ROOT_DIR}/client/coverage/done.txt
 }
 
