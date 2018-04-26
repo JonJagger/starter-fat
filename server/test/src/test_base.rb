@@ -27,44 +27,29 @@ class TestBase < HexMiniTest
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def custom_choices
+  def language_start_points
     rack_call(__method__.to_s, {})
     @json[__method__.to_s]
   end
 
-  def languages_choices
-    rack_call(__method__.to_s, {})
-    @json[__method__.to_s]
-  end
-
-  def exercises_choices
-    rack_call(__method__.to_s, {})
-    @json[__method__.to_s]
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def custom_manifest(major_name, minor_name)
+  def language_manifest(display_name, exercise_name)
     args = {
-      major_name:major_name,
-      minor_name:minor_name
-    }
-    rack_call(__method__.to_s, args)
-    @json[__method__.to_s]
-  end
-
-  def language_manifest(major_name, minor_name, exercise_name)
-    args = {
-      major_name:major_name,
-      minor_name:minor_name,
+      display_name:display_name,
       exercise_name:exercise_name
     }
     rack_call(__method__.to_s, args)
     @json[__method__.to_s]
   end
 
-  def manifest(old_name)
-    args = { old_name:old_name }
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def custom_start_points
+    rack_call(__method__.to_s, {})
+    @json[__method__.to_s]
+  end
+
+  def custom_manifest(display_name)
+    args = { display_name:display_name }
     rack_call(__method__.to_s, args)
     @json[__method__.to_s]
   end

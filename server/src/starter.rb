@@ -1,96 +1,142 @@
 require 'json'
-require_relative 'cache'
-require_relative 'renamer'
 
 class Starter
 
   def initialize
-    @cache = Cache.new
+    @cache = {}
+
+    @cache['languages'] = {
+      'display_names' => display_names('languages'),
+      'manifests'     => manifests('languages'),
+      'exercises'     => exercises
+    }
+    @cache['custom'] = {
+      'display_names' => display_names('custom'),
+      'manifests'     => manifests('custom')
+    }
   end
 
   # - - - - - - - - - - - - - - - - -
-  # choices when setting up a cyber-dojo
+  # setting up a cyber-dojo: language,testFramwork + exercise
   # - - - - - - - - - - - - - - - - -
 
-  def custom_choices
-    cache.of_display_names('custom')
+  def language_start_points
+    {
+      'languages' => cache['languages']['display_names'],
+      'exercises' => cache['languages']['exercises']
+    }
   end
 
-  def languages_choices
-    cache.of_display_names('languages')
-  end
-
-  def exercises_choices
-    cache.of_exercises
-  end
-
-  # - - - - - - - - - - - - - - - - -
-  # manifests for given choices
-  # - - - - - - - - - - - - - - - - -
-
-  def custom_manifest(major_name, minor_name)
-    major_minor_manifest(major_name, minor_name, 'custom')
+  def language_manifest(display_name, exercise_name)
+    assert_string('display_name', display_name)
+    assert_string('exercise_name', exercise_name)
+    {
+      'manifest' => cached_manifest('languages', display_name),
+      'exercise' => cached_exercise(exercise_name)
+    }
   end
 
   # - - - - - - - - - - - - - - - - -
-
-  def language_manifest(major_name, minor_name, exercise_name)
-    instructions = cache.of_exercises[:contents][exercise_name]
-    if instructions.nil?
-      raise ArgumentError.new('exercise_name:invalid')
-    end
-    manifest = major_minor_manifest(major_name, minor_name, 'languages')
-    manifest['visible_files']['instructions'] = instructions
-    manifest['exercise'] = exercise_name
-    manifest
-  end
-
+  # setting up a cyber-dojo: custom
   # - - - - - - - - - - - - - - - - -
 
-  def manifest(old_name)
-    parts = old_name.split('-', 2)
-    parts = Renamer.new.renamed(parts)
-    major_name = parts[0]
-    minor_name = parts[1]
-    major_minor_manifest(major_name, minor_name, 'languages')
+  def custom_start_points
+    cache['custom']['display_names']
   end
 
-  # - - - - - - - - - - - - - - - - -
+  def custom_manifest(display_name)
+    assert_string('display_name', display_name)
+    cached_manifest('custom', display_name)
+  end
+
+  private # = = = = = = = = = = = = =
 
   def method_missing(name, *_args, &_block)
     raise RuntimeError.new("#{name}:unknown_method")
   end
 
-  private # = = = = = = = = = = = = =
+  # - - - - - - - - - - - - - - - - -
 
   attr_reader :cache
 
-  def major_minor_manifest(major_name, minor_name, dir_name)
-    dir_cache = cache.of_dirs(dir_name)
-    major = dir_cache[major_name]
-    if major.nil?
-      raise ArgumentError.new('major_name:invalid')
+  def display_names(sub_dir)
+    display_names = []
+    pattern = "#{start_points_dir}/#{sub_dir}/**/manifest.json"
+    Dir.glob(pattern).each do |filename|
+      json = JSON.parse(IO.read(filename))
+      display_names << json['display_name']
     end
-    dir = major[minor_name]
-    if dir.nil?
-      raise ArgumentError.new('minor_name:invalid')
-    end
-
-    manifest = JSON.parse(IO.read("#{dir}/manifest.json"))
-    set_visible_files(dir, manifest)
-    manifest
+    display_names.sort
   end
 
-  # - - - - - - - - - - - - - - - - -
+  def manifests(sub_dir)
+    manifests = {}
+    pattern = "#{start_points_dir}/#{sub_dir}/**/manifest.json"
+    Dir.glob(pattern).each do |manifest_filename|
+      manifest = JSON.parse(IO.read(manifest_filename))
+      display_name = manifest['display_name']
+      visible_filenames = manifest['visible_filenames']
+      dir = File.dirname(manifest_filename)
+      manifest['visible_files'] =
+        Hash[visible_filenames.collect { |filename|
+          [filename, IO.read("#{dir}/#{filename}")]
+        }]
+      manifest['visible_files']['output'] = ''
+      manifest.delete('visible_filenames')
+      manifests[display_name] = manifest
+    end
+    manifests
+  end
 
-  def set_visible_files(dir, manifest)
-    visible_filenames = manifest['visible_filenames']
-    manifest['visible_files'] =
-      Hash[visible_filenames.collect { |filename|
-        [filename, IO.read("#{dir}/#{filename}")]
-      }]
-    manifest['visible_files']['output'] = ''
-    manifest.delete('visible_filenames')
+  # - - - - - - - - - - - - - - - - - - - -
+
+  def exercises
+    result = {}
+    pattern = "#{start_points_dir}/exercises/**/instructions"
+    Dir.glob(pattern).each do |filename|
+      # eg /app/start_points/exercises/Bowling_Game/instructions
+      name = filename.split('/')[-2] # eg Bowling_Game
+      result[name] = IO.read(filename)
+    end
+    result
+  end
+
+  # - - - - - - - - - - - - - - - - - - - -
+
+  def cached_manifest(type, display_name)
+    result = cache[type]['manifests'][display_name]
+    if result.nil?
+      error('display_name', "#{display_name}:unknown")
+    end
+    result
+  end
+
+  def cached_exercise(exercise_name)
+    result = cache['languages']['exercises'][exercise_name]
+    if result.nil?
+      error('exercise_name', "#{exercise_name}:unknown")
+    end
+    result
+  end
+
+  # - - - - - - - - - - - - - - - - - - - -
+
+  def start_points_dir
+    ENV['CYBER_DOJO_START_POINTS_ROOT']
+  end
+
+  # - - - - - - - - - - - - - - - - - - - -
+
+  def assert_string(arg_name, arg)
+    unless arg.is_a?(String)
+      error(arg_name, '!string')
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - -
+
+  def error(name, diagnostic)
+    raise ArgumentError.new("#{name}:#{diagnostic}")
   end
 
 end

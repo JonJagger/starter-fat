@@ -8,37 +8,35 @@ class CustomManifestTest < TestBase
 
   # - - - - - - - - - - - - - - - - - - - -
 
+  test '9C0',
+  %w( missing display_name becomes exception ) do
+    assert_rack_call_raw('custom_manifest',
+      '{}',
+      { exception:'display_name:missing' }
+    )
+  end
+
+  # - - - - - - - - - - - - - - - - - - - -
+
   test '9C1',
-  %w( hash with invalid argument becomes exception ) do
-    assert_rack_call_raw('custom_manifest',
-      '{"major_name":42}',
-      { exception:'major_name:invalid' }
-    )
-    assert_rack_call_raw('custom_manifest',
-      '{"major_name":"Yahtzee refactoring","minor_name":42}',
-      { exception:'minor_name:invalid' }
-    )
+  %w( non-string display_name becomes exception ) do
+    custom_manifest(42)
+    assert_exception('display_name:!string')
   end
 
   # - - - - - - - - - - - - - - - - - - - -
 
-  test '9C2', %w( invalid major_name becomes exception ) do
-    custom_manifest('xxx', 'C# NUnit')
-    assert_exception('major_name:invalid')
+  test '9C2',
+  %w( unknown display_name becomes exception ) do
+    custom_manifest('xxx, C# NUnit')
+    assert_exception('display_name:xxx, C# NUnit:unknown')
   end
 
   # - - - - - - - - - - - - - - - - - - - -
 
-  test '9C3', %w( invalid minor_name becomes exception ) do
-    custom_manifest('Yahtzee refactoring', 'xxx')
-    assert_exception('minor_name:invalid')
-  end
-
-  # - - - - - - - - - - - - - - - - - - - -
-
-  test '9C4',
-  %w( valid with one optional property ) do
-    manifest = custom_manifest('Yahtzee refactoring', 'C# NUnit')
+  test '9C3',
+  %w( valid display_name ) do
+    manifest = custom_manifest('Yahtzee refactoring, C# NUnit')
 
     expected_keys = %w(
       display_name image_name runner_choice visible_files
