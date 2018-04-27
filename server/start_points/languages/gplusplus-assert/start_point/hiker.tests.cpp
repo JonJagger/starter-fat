@@ -4,16 +4,19 @@
 
 namespace {
 
-void life_the_universe_and_everthing()
-{
-    assert(answer() == 42);
-}
+    void life_the_universe_and_everthing()
+    {
+        assert(answer() == 42);
+    }
 
+    const char * green_traffic_light_pattern()
+    {
+        return "All tests passed";
+    }
 } // namespace
 
 int main()
 {
     life_the_universe_and_everthing();
-    // green-traffic light pattern...
-    std::cout << "All tests passed";
+    std::cout << green_traffic_light_pattern();
 }

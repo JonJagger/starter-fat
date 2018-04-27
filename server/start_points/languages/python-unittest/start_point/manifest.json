@@ -1,4 +1,3 @@
-
 {
   "display_name": "Python, unittest",
 
@@ -10,18 +9,14 @@
 
   "image_name": "cyberdojofoundation/python_unittest",
 
-  "runner_choice": "stateless",
+  "filename_extension": ".py",
 
-  "filename_extension" : ".py",
-
-  "tab_size": 3,
+  "tab_size": 4,
 
   "progress_regexs": [
     "FAILED \\(failures=\\d+\\)",
     "OK"
   ],
 
-  "highlight_filenames": [ "test_hiker.py" ],
-
-  "max_seconds": 11
+  "runner_choice": "stateless"
 }
